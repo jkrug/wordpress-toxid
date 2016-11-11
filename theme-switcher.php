@@ -20,31 +20,31 @@ http://ryan.boren.me/
 class ThemeSwitcher {
 
     function ThemeSwitcher()
-    {       
+    {
         add_filter('stylesheet', array(&$this, 'get_stylesheet'));
         add_filter('template', array(&$this, 'get_template'));
         add_filter('preview_page_link', array(&$this, 'add_preview_theme'));
         add_filter('preview_post_link', array(&$this, 'add_preview_theme'));
         add_action('admin_init', array(&$this, 'init_admin'));
     }
-    
+
     function add_preview_theme($link)
     {
         $theme = urlencode(get_option('toxid_preview_theme'));
         $link .= (strpos($link, '?') === false ? '?' : '&') . 'wptheme=' . $theme;
         return $link;
     }
-    
+
     function init_admin()
     {
         register_setting('general', 'toxid_preview_theme');
         add_settings_section('toxid-settings', 'TOXID', '__return_false', 'general');
         add_settings_field('toxid_preview_theme', 'Theme used for previews', array(&$this, 'admin_toxid_preview_theme_field'), 'general', 'toxid-settings');
     }
-    
+
     function admin_toxid_preview_theme_field()
     {
-        $themes = array_keys(get_themes());
+        $themes = array_keys(wp_get_themes());
         $currentTheme = get_option('toxid_preview_theme');
         echo '<select name="toxid_preview_theme">';
         echo '<option>' . __('None') . '</option>';
@@ -53,7 +53,7 @@ class ThemeSwitcher {
         }
         echo '</select>';
     }
-    
+
     function get_stylesheet($stylesheet = '') {
         $theme = $this->get_theme();
 
@@ -61,12 +61,12 @@ class ThemeSwitcher {
             return $stylesheet;
         }
 
-        $theme = get_theme($theme);
+        $theme = wp_get_themes($theme);
 
         // Don't let people peek at unpublished themes.
         if (isset($theme['Status']) && $theme['Status'] != 'publish')
             return $template;
-        
+
         if (empty($theme)) {
             return $stylesheet;
         }
@@ -81,25 +81,26 @@ class ThemeSwitcher {
             return $template;
         }
 
-        $theme = get_theme($theme);
-        
+        $theme = wp_get_themes($theme);
+
         if ( empty( $theme ) ) {
             return $template;
         }
 
         // Don't let people peek at unpublished themes.
         if (isset($theme['Status']) && $theme['Status'] != 'publish')
-            return $template;       
+            return $template;
 
         return $theme['Template'];
     }
 
     function get_theme() {
-        if ( ! empty($_GET["wptheme"] ) ) {
-            return $_GET["wptheme"];
-        } else {
+        if ( empty($_GET["wptheme"] ) ) {
+
             return '';
         }
+
+        return $_GET["wptheme"];
     }
 }
 
