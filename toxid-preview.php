@@ -36,7 +36,6 @@
 
 /**
  * Don't call this file directly.
- * TODO is this really needed?
  */
 if ( ! class_exists( 'WP' ) ) {
     die();
@@ -55,13 +54,16 @@ class TOXID_Preview {
      * @since 1.0.0
      */
     function init() {
-
-        add_filter( 'pre_get_posts', [ __CLASS__, 'show_public_preview' ] );
-        add_filter( 'query_vars', [ __CLASS__, 'add_query_var' ] );
-        // Add the query var to WordPress SEO by Yoast whitelist.
-        /* TODO is this really needed? */
-        add_filter( 'wpseo_whitelist_permalink_vars', [__CLASS__, 'add_query_var' ] );
-        add_action('admin_init', [__CLASS__, 'init_admin' ]);
+        if ( ! is_admin() ) {
+            add_filter('pre_get_posts', [__CLASS__, 'show_public_preview']);
+            add_filter('query_vars', [__CLASS__, 'add_query_var']);
+            // Add the query var to WordPress SEO by Yoast whitelist.
+            /* TODO is this really needed? */
+            add_filter('wpseo_whitelist_permalink_vars', [__CLASS__, 'add_query_var']);
+        }
+        else {
+            add_action('admin_init', [__CLASS__, 'init_admin']);
+        }
     }
 
     /**
@@ -72,7 +74,6 @@ class TOXID_Preview {
         add_settings_section('toxid-settings', 'TOXID', '__return_false', 'general');
         register_setting('general', 'toxid_preview_password');
         add_settings_field('toxid_preview_password', ' Password for previews', [__CLASS__, 'admin_toxid_preview_password_field'], 'general', 'toxid-settings');
-
     }
 
     /**
@@ -80,8 +81,9 @@ class TOXID_Preview {
      */
     function admin_toxid_preview_password_field()
     {
-        $pw = get_option('toxid_preview_password');
-        echo "<input name='toxid_preview_password' '.$pw ? value=$pw '.>";
+        $password = get_option('toxid_preview_password');
+
+        echo "<input name=\"toxid_preview_password\" value=\"{$password}\">";
     }
 
     /**
