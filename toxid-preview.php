@@ -53,40 +53,41 @@ class TOXID_Preview {
      *
      * @since 1.0.0
      */
-    public static function init() {
+    function init() {
         if ( ! is_admin() ) {
-            add_filter( 'pre_get_posts', array( __CLASS__, 'show_public_preview' ) );
-            add_filter( 'query_vars', array( __CLASS__, 'add_query_var' ) );
+            add_filter('pre_get_posts', [__CLASS__, 'show_public_preview']);
+            add_filter('query_vars', [__CLASS__, 'add_query_var']);
             // Add the query var to WordPress SEO by Yoast whitelist.
-            add_filter( 'wpseo_whitelist_permalink_vars', array( __CLASS__, 'add_query_var' ) );
+            /* TODO is this really needed? */
+            add_filter('wpseo_whitelist_permalink_vars', [__CLASS__, 'add_query_var']);
+        }
+        else {
+            add_action('admin_init', [__CLASS__, 'init_admin']);
         }
     }
-
-    public static function init_admin()
-    {
-        //ToDo Finish settings in backend
-        /*register_setting('general', 'toxid_preview_password');
-        add_settings_section('toxid-settings', 'TOXID', '__return_false', 'general');
-        add_settings_field('toxid_preview_password', ' Password for previews', array(&$this, 'admin_toxid_preview_theme_field'), 'general', 'toxid-settings');
-        */
-    }
-
-    function admin_toxid_preview_theme_field()
-    {
-        //ToDo finish settings in Backend
-        /*$themes = array_keys(get_themes());
-        $currentTheme = get_option('toxid_preview_theme');
-        echo '<input name="toxid_preview_password">';
-        echo '<option>' . __('None') . '</option>';
-        foreach ($themes as $theme) {
-            printf('<option value="%s" %s>%s</option>', esc_attr($theme), ($theme == $currentTheme ? 'selected' : ''), esc_html($theme));
-        }
-        echo '</select>';*/
-    }
-
 
     /**
-     * Registers the new query var `_ppp`.
+     * Registers the input field for the preview password
+     */
+    function init_admin()
+    {
+        add_settings_section('toxid-settings', 'TOXID', '__return_false', 'general');
+        register_setting('general', 'toxid_preview_password');
+        add_settings_field('toxid_preview_password', ' Password for previews', [__CLASS__, 'admin_toxid_preview_password_field'], 'general', 'toxid-settings');
+    }
+
+    /**
+     * The input field for the preview password
+     */
+    function admin_toxid_preview_password_field()
+    {
+        $password = get_option('toxid_preview_password');
+
+        echo "<input name=\"toxid_preview_password\" value=\"{$password}\">";
+    }
+
+    /**
+     * Registers the new query var `toxid-preview`.
      *
      * @since 2.1.0
      *
@@ -117,7 +118,7 @@ class TOXID_Preview {
             $query->is_singular() &&
             $query->get( 'toxid-preview' )
         ) {
-            add_filter( 'posts_results', array( __CLASS__, 'set_post_to_publish' ), 10, 2 );
+            add_filter( 'posts_results', [ __CLASS__, 'set_post_to_publish' ], 10, 2 );
         }
 
         return $query;
@@ -132,7 +133,8 @@ class TOXID_Preview {
      * @param int $post_id The post id.
      * @return bool True if a public preview is allowed, false on a failure.
      */
-    private static function is_public_preview_available( $post_id ) {return true;
+    private static function is_public_preview_available( $post_id ) {
+
         if ( empty( $post_id ) ) {
             return false;
         }
@@ -155,16 +157,14 @@ class TOXID_Preview {
      */
     public static function set_post_to_publish( $posts ) {
         // Remove the filter again, otherwise it will be applied to other queries too.
-        remove_filter( 'posts_results', array( __CLASS__, 'set_post_to_publish' ), 10 );
+        remove_filter( 'posts_results', [ __CLASS__, 'set_post_to_publish' ], 10 );
 
         if ( empty( $posts ) ) {
+
             return;
         }
 
         $post_id = $posts[0]->ID;
-
-        // If the post has gone live, redirect to it's proper permalink.
-        //self::maybe_redirect_to_published_post( $post_id );
 
         if ( self::is_public_preview_available( $post_id ) ) {
             // Set post status to publish so that it's visible.
@@ -173,7 +173,7 @@ class TOXID_Preview {
             // Disable comments and pings for this post.
             add_filter( 'comments_open', '__return_false' );
             add_filter( 'pings_open', '__return_false' );
-            add_filter( 'wp_link_pages_link', array( __CLASS__, 'filter_wp_link_pages_link' ), 10, 2 );
+            add_filter( 'wp_link_pages_link', [ __CLASS__, 'filter_wp_link_pages_link' ], 10, 2 );
         }
 
         return $posts;
@@ -184,18 +184,20 @@ class TOXID_Preview {
      *
      * @since 1.0.0
      *
-     * @param string     $nonce  Nonce that was used in the form to verify.
-     * @param string|int $action Should give context to what is taking place and be the same when nonce was created.
-     * @return bool               Whether the nonce check passed or failed.
+     * @param string $nonce Nonce that was used in the form to verify.
+     * @return bool Whether the nonce check passed or failed.
+     * @internal param int|string $action Should give context to what is taking place and be the same when nonce was created.
      */
     private static function verify_nonce( $nonce ) {
-        //ToDo verify the hash as set in the settings from wordpress
-        if ( true ) {
+
+        $previewPW = get_option('toxid_preview_password');
+
+        if ( $nonce === $previewPW ) {
             return 1;
         }
-        // Invalid nonce.
+
         return false;
     }
 }
 
-add_action( 'plugins_loaded', array( 'TOXID_Preview', 'init' ) );
+add_action( 'plugins_loaded', ['TOXID_Preview', 'init'] );

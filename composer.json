@@ -1,0 +1,9 @@
+{
+  "name": "jkrug/wordpress-toxid",
+  "description": "Wordpress Plugins for enabeling a few features with TOXID cURL",
+  "type": "wordpress-plugin",
+  "license": "GPL-3.0",
+  "require": {
+    "composer/installers": "^1.0"
+  }
+}
