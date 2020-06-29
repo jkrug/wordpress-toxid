@@ -19,7 +19,7 @@ http://ryan.boren.me/
 
 class ThemeSwitcher {
 
-    function ThemeSwitcher()
+    function __construct()
     {
         add_filter('stylesheet', array(&$this, 'get_stylesheet'));
         add_filter('template', array(&$this, 'get_template'));
