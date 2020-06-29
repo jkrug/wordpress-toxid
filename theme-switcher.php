@@ -17,7 +17,7 @@ http://ryan.boren.me/
 
 */
 
-class ThemeSwitcher {
+class ToxidThemeSwitcher {
 
     function __construct()
     {
@@ -104,4 +104,4 @@ class ThemeSwitcher {
     }
 }
 
-$theme_switcher = new ThemeSwitcher();
+$theme_switcher = new ToxidThemeSwitcher();
