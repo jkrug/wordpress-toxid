@@ -17,9 +17,16 @@ http://ryan.boren.me/
 
 */
 
-class ThemeSwitcher {
 
-    function ThemeSwitcher()
+class ToxidThemeSwitcher {
+
+    /** @var string|false */
+    protected $theme_param = null;
+
+    /** @var WP_Theme|false */
+    protected $theme = null;
+
+    function __construct()
     {
         add_filter('stylesheet', array(&$this, 'get_stylesheet'));
         add_filter('template', array(&$this, 'get_template'));
@@ -54,54 +61,57 @@ class ThemeSwitcher {
         echo '</select>';
     }
 
-    function get_stylesheet($stylesheet = '') {
-        $theme = $this->get_theme();
-
-        if (empty($theme)) {
-            return $stylesheet;
+    function get_stylesheet($stylesheet = '')
+    {
+        if ($theme = $this->get_theme()) {
+            return $theme['Stylesheet'];
         }
-
-        $theme = wp_get_themes($theme);
-
-        // Don't let people peek at unpublished themes.
-        if (isset($theme['Status']) && $theme['Status'] != 'publish')
-            return $template;
-
-        if (empty($theme)) {
-            return $stylesheet;
-        }
-
-        return $theme['Stylesheet'];
+        return $stylesheet;
     }
 
     function get_template($template) {
-        $theme = $this->get_theme();
-
-        if (empty($theme)) {
-            return $template;
+        if ($theme = $this->get_theme()) {
+            return $theme['Template'];
         }
-
-        $theme = wp_get_themes($theme);
-
-        if ( empty( $theme ) ) {
-            return $template;
-        }
-
-        // Don't let people peek at unpublished themes.
-        if (isset($theme['Status']) && $theme['Status'] != 'publish')
-            return $template;
-
-        return $theme['Template'];
+        return $template;
     }
 
-    function get_theme() {
-        if ( empty($_GET["wptheme"] ) ) {
-
-            return '';
+    /**
+     * set theme-switch url param
+     * default value is false
+     *
+     * @return string|false
+     */
+    protected function _get_theme_param()
+    {
+        if ($this->theme_param === null) {
+            $this->theme_param = !empty($_GET['wptheme']) ? $_GET['wptheme'] : false;
         }
-
-        return $_GET["wptheme"];
+        return $this->theme_param;
     }
+
+    /**
+     * returns requested WP_Theme object if set
+     * default value is false
+     *
+     * @return WP_Theme|bool
+     */
+    public function get_theme()
+    {
+        if ($this->theme === null) {
+            $this->theme = false;
+            if ($theme_name = $this->_get_theme_param()) {
+                /** @var array $themes */
+                $themes = wp_get_themes();
+                // check if theme is set, but don't let people peek at unpublished themes.
+                if (isset($themes[$theme_name]) && !(isset($themes[$theme_name]['Status']) && $themes[$theme_name]['Status'] != 'publish')) {
+                    $this->theme = $themes[$theme_name];
+                }
+            }
+        }
+        return $this->theme;
+    }
+
 }
 
-$theme_switcher = new ThemeSwitcher();
+$theme_switcher = new ToxidThemeSwitcher();
